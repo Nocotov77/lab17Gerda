@@ -1,11 +1,10 @@
-# main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from datetime import date
 
 from routers import router as books_router
-from database import books_db, borrow_records, get_next_id, book_to_response  # теперь импорт из database
+from database import engine, Base
 
 app = FastAPI(
     title="Book Library API",
@@ -26,6 +25,11 @@ app.add_middleware(
 
 # Подключаем роутер
 app.include_router(books_router, prefix="/api/v1", tags=["books"])
+
+@app.on_event("startup")
+async def startup():
+    # Автоматически создаёт таблицы, если их нет
+    Base.metadata.create_all(bind=engine)
 
 @app.get("/", include_in_schema=False)
 async def root():
